@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"testing"
 )
 
@@ -9,12 +10,32 @@ import (
 // TEST_DRIVERS: sqlite, mysql, postgres, sqlserver
 
 func TestGORM(t *testing.T) {
-	user := User{Name: "jinzhu"}
-
-	DB.Create(&user)
-
-	var result User
-	if err := DB.First(&result, user.ID).Error; err != nil {
+	if err := DB.SetupJoinTable(&User{}, "Languages", &UserLanguage{}); err != nil {
 		t.Errorf("Failed, got error: %v", err)
+	}
+
+	english := Language{
+		Name: "English",
+	}
+	DB.Save(&english)
+
+	user := User{
+		Name: "jinzhu",
+		Languages: []*Language{
+			&english,
+		},
+	}
+
+	DB.Omit("Languages.*").Save(&user)
+
+	var result UserLanguage
+	if err := DB.Limit(1).First(&result).Error; err != nil {
+		t.Errorf("Failed, got error: %v", err)
+	}
+
+	if result.ID == "" {
+		t.Error("Failed, BeforeCreate() is not working")
+	} else {
+		log.Printf("BeforeCreate() is working, %+v", result)
 	}
 }
