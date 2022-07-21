@@ -83,7 +83,7 @@ func OpenTestConnection() (db *gorm.DB, err error) {
 
 func RunMigrations() {
 	var err error
-	allModels := []interface{}{&User{}, &Account{}, &Pet{}, &Company{}, &Toy{}, &Language{}}
+	allModels := []interface{}{&User{}, &Language{}}
 	rand.Seed(time.Now().UnixNano())
 	rand.Shuffle(len(allModels), func(i, j int) { allModels[i], allModels[j] = allModels[j], allModels[i] })
 
@@ -94,8 +94,8 @@ func RunMigrations() {
 		os.Exit(1)
 	}
 
-	if err = DB.AutoMigrate(allModels...); err != nil {
-		log.Printf("Failed to auto migrate, but got error %v\n", err)
+	if err = DB.Migrator().CreateTable(allModels...); err != nil {
+		log.Printf("Failed to create table, but got error %v\n", err)
 		os.Exit(1)
 	}
 

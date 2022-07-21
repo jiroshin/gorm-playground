@@ -1,9 +1,7 @@
 package main
 
 import (
-	"database/sql"
-	"time"
-
+	"github.com/rs/xid"
 	"gorm.io/gorm"
 )
 
@@ -14,47 +12,28 @@ import (
 type User struct {
 	gorm.Model
 	Name      string
-	Age       uint
-	Birthday  *time.Time
-	Account   Account
-	Pets      []*Pet
-	Toys      []Toy `gorm:"polymorphic:Owner"`
-	CompanyID *int
-	Company   Company
-	ManagerID *uint
-	Manager   *User
-	Team      []User     `gorm:"foreignkey:ManagerID"`
-	Languages []Language `gorm:"many2many:UserSpeak"`
-	Friends   []*User    `gorm:"many2many:user_friends"`
-	Active    bool
-}
-
-type Account struct {
-	gorm.Model
-	UserID sql.NullInt64
-	Number string
-}
-
-type Pet struct {
-	gorm.Model
-	UserID *uint
-	Name   string
-	Toy    Toy `gorm:"polymorphic:Owner;"`
-}
-
-type Toy struct {
-	gorm.Model
-	Name      string
-	OwnerID   string
-	OwnerType string
-}
-
-type Company struct {
-	ID   int
-	Name string
+	Languages []*Language `gorm:"many2many:user_languages"`
 }
 
 type Language struct {
-	Code string `gorm:"primarykey"`
+	gorm.Model
 	Name string
+}
+
+// Customize JoinTable
+type UserLanguage struct {
+	OriginalModel
+	UserID     uint `gorm:"uniqIndex:idx_user_languages_user_id_language_id"`
+	LanguageID uint `gorm:"uniqIndex:idx_user_languages_user_id_language_id"`
+}
+
+type OriginalModel struct {
+	ID string `gorm:"primaryKey"`
+}
+
+func (o *OriginalModel) BeforeCreate(db *gorm.DB) error {
+	if o.ID == "" {
+		o.ID = xid.New().String()
+	}
+	return nil
 }
